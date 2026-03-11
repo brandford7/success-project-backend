@@ -91,43 +91,6 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-  /*async getAllUsers(options: {
-    page: number;
-    limit: number;
-    search?: string;
-  }): Promise<PaginatedResponse<User>> {
-    const { page, limit, search } = options;
-
-    const queryBuilder = this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.roles', 'roles')
-      .orderBy('user.createdAt', 'DESC');
-
-    // Apply search filter
-    if (search && search.trim().length > 0) {
-      queryBuilder.where(
-        'user.email ILIKE :search OR user.phoneNumber ILIKE :search',
-        { search: `%${search}%` },
-      );
-    }
-
-    const [data, total] = await queryBuilder
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
-
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-  }
-*/
-
   async getAllUsers(options: {
     page: number;
     limit: number;
