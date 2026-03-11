@@ -1,6 +1,7 @@
 import { IsInt, Min, IsEnum, IsOptional } from 'class-validator';
 
 export enum VipDuration {
+  ONE_DAY = 1,
   ONE_MONTH = 30,
   THREE_MONTHS = 90,
   SIX_MONTHS = 180,

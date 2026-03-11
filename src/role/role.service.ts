@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Role } from './entities/role.entity';
@@ -10,43 +10,49 @@ export class RolesService {
     private readonly roleRepository: Repository<Role>,
   ) {}
 
+  async findAll(): Promise<Role[]> {
+    return this.roleRepository.find();
+  }
+
   async findByName(name: string): Promise<Role | null> {
-    return this.roleRepository.findOne({ where: { name } });
+    return this.roleRepository.findOne({
+      where: { name },
+    });
   }
 
   async findByNames(names: string[]): Promise<Role[]> {
-    if (names.length === 0) {
-      return [];
+    const roles = await this.roleRepository.find({
+      where: {
+        name: In(names),
+      },
+    });
+
+    // Validate all roles were found
+    if (roles.length !== names.length) {
+      const foundNames = roles.map((r) => r.name);
+      const missingNames = names.filter((name) => !foundNames.includes(name));
+      throw new NotFoundException(
+        `Roles not found: ${missingNames.join(', ')}`,
+      );
     }
-    return this.roleRepository.find({
-      where: { name: In(names) },
-    });
-  }
 
-  async findAll(): Promise<Role[]> {
-    return this.roleRepository.find({
-      order: { name: 'ASC' },
-    });
-  }
-
-  async create(name: string, description?: string): Promise<Role> {
-    const role = this.roleRepository.create({
-      name: name.toLowerCase(),
-      description,
-    });
-    return this.roleRepository.save(role);
+    return roles;
   }
 
   async ensureDefaultRoles(): Promise<void> {
     const defaultRoles = [
-      { name: 'user', description: 'Regular user - can view tips' },
-      { name: 'admin', description: 'Administrator - can create tips' },
+      { name: 'user', description: 'Regular user role' },
+      { name: 'admin', description: 'Administrator role' },
     ];
 
     for (const roleData of defaultRoles) {
-      const exists = await this.findByName(roleData.name);
+      const exists = await this.roleRepository.findOne({
+        where: { name: roleData.name },
+      });
+
       if (!exists) {
-        await this.create(roleData.name, roleData.description);
+        const role = this.roleRepository.create(roleData);
+        await this.roleRepository.save(role);
       }
     }
   }

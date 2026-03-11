@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { User } from '../users/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         signOptions: { expiresIn: '30d' },
       }),
     }),
-    UsersModule, // ← Imports UsersService (which needs User repository)
+    UsersModule,
+    EmailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

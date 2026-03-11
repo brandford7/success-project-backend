@@ -33,6 +33,12 @@ export class User {
   })
   roles!: Role[];
 
+  @Column({ type: 'varchar', nullable: true, select: false })
+  resetPasswordToken!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordExpires!: Date | null;
+
   @Column({ type: 'boolean', default: false })
   isVip!: boolean;
 

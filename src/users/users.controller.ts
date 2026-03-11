@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -19,6 +20,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { GrantVipDto } from './dto/grant-vip.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { VipExpiryService } from './vip-expiry.service';
+import { UpdateUserRolesDto } from './dto/update-user-roles.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -98,5 +100,35 @@ export class UsersController {
   async checkExpiredVips() {
     await this.vipExpiryService.manualExpiryCheck();
     return { message: 'Expired VIPs checked and updated' };
+  }
+
+  @Patch(':id/roles')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  async updateUserRoles(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Body() updateUserRolesDto: UpdateUserRolesDto,
+  ) {
+    return this.usersService.updateUserRoles(userId, updateUserRolesDto);
+  }
+
+  @Post(':id/roles/:roleName')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  async addRoleToUser(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('roleName') roleName: string,
+  ) {
+    return this.usersService.addRoleToUser(userId, roleName);
+  }
+
+  @Delete(':id/roles/:roleName')
+  @Roles('admin')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeRoleFromUser(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('roleName') roleName: string,
+  ) {
+    await this.usersService.removeRoleFromUser(userId, roleName);
   }
 }

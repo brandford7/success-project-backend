@@ -7,6 +7,7 @@ import { RolesModule } from './role/role.module';
 import { TipsModule } from './tips/tips.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PaymentsModule } from './payments/payments.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { PaymentsModule } from './payments/payments.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
-        url: configService.get('DB_URL'),
+        //url: configService.get('DB_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
@@ -39,6 +40,7 @@ import { PaymentsModule } from './payments/payments.module';
     AuthModule,
     TipsModule,
     PaymentsModule,
+    EmailModule,
   ],
 })
 export class AppModule {}

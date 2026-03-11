@@ -65,6 +65,7 @@ export class PaymentsService {
 
     // Calculate price
     const priceMap = {
+      [VipDuration.ONE_DAY]: 500,
       [VipDuration.ONE_MONTH]: 5000,
       [VipDuration.THREE_MONTHS]: 10000,
       [VipDuration.SIX_MONTHS]: 20000,
@@ -78,6 +79,7 @@ export class PaymentsService {
     }
 
     const durationNames = {
+      [VipDuration.ONE_DAY]: '1 Day',
       [VipDuration.ONE_MONTH]: '1 Month',
       [VipDuration.THREE_MONTHS]: '3 Months',
       [VipDuration.SIX_MONTHS]: '6 Months',

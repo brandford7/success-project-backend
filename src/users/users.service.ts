@@ -9,6 +9,7 @@ import { User } from './entities/user.entity';
 import { RolesService } from '../role/role.service';
 import { GrantVipDto } from './dto/grant-vip.dto';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
+import { UpdateUserRolesDto } from './dto/update-user-roles.dto';
 
 @Injectable()
 export class UsersService {
@@ -90,7 +91,7 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-  async getAllUsers(options: {
+  /*async getAllUsers(options: {
     page: number;
     limit: number;
     search?: string;
@@ -117,6 +118,48 @@ export class UsersService {
 
     return {
       data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+*/
+
+  async getAllUsers(options: {
+    page: number;
+    limit: number;
+    search?: string;
+  }): Promise<PaginatedResponse<User>> {
+    const { page, limit, search } = options;
+
+    const queryBuilder = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'roles')
+      .orderBy('user.createdAt', 'DESC');
+
+    if (search && search.trim().length > 0) {
+      queryBuilder.where(
+        'user.email ILIKE :search OR user.phoneNumber ILIKE :search',
+        { search: `%${search}%` },
+      );
+    }
+
+    const [data, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    // Transform roles to just names ✅
+    const transformedData = data.map((user) => ({
+      ...user,
+      roles: user.roles.map((role) => role.name), // Convert to string[]
+    }));
+
+    return {
+      data: transformedData as any,
       meta: {
         total,
         page,
@@ -220,5 +263,58 @@ export class UsersService {
     const expiredVips = totalVips - activeVips;
 
     return { totalVips, activeVips, expiredVips };
+  }
+
+  // Role Management - Using RoleService ✅
+  async updateUserRoles(
+    userId: string,
+    updateUserRolesDto: UpdateUserRolesDto,
+  ): Promise<User> {
+    const { roleNames } = updateUserRolesDto;
+
+    const user = await this.findById(userId);
+
+    // Use RoleService to find roles (best practice!)
+    const roles = await this.rolesService.findByNames(roleNames);
+
+    user.roles = roles;
+
+    return this.userRepository.save(user);
+  }
+
+  async addRoleToUser(userId: string, roleName: string): Promise<User> {
+    const user = await this.findById(userId);
+
+    // Check if user already has this role
+    if (user.roles.some((role) => role.name === roleName)) {
+      return user;
+    }
+
+    // Use RoleService to find role (best practice!)
+    const role = await this.rolesService.findByName(roleName);
+
+    if (!role) {
+      throw new NotFoundException(`Role "${roleName}" not found`);
+    }
+
+    user.roles.push(role);
+
+    return this.userRepository.save(user);
+  }
+
+  async removeRoleFromUser(userId: string, roleName: string): Promise<User> {
+    const user = await this.findById(userId);
+
+    // Don't allow removing the last role
+    if (user.roles.length === 1) {
+      throw new BadRequestException('User must have at least one role');
+    }
+
+    // Don't allow removing admin role from yourself
+    // (You'd need to pass current user ID to check this - optional enhancement)
+
+    user.roles = user.roles.filter((role) => role.name !== roleName);
+
+    return this.userRepository.save(user);
   }
 }
