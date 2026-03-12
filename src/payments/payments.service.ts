@@ -2,10 +2,10 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import * as crypto from 'crypto';
+import { createHmac } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import { UsersService } from '../users/users.service';
 import { VipDuration } from '../users/dto/grant-vip.dto';
-import { v4 as uuidv4 } from 'uuid';
 
 interface PaystackInitializeResponse {
   status: boolean;
@@ -22,12 +22,34 @@ interface PaystackVerifyResponse {
   message: string;
   data: {
     id: number;
+    status: 'success' | 'failed' | 'abandoned';
+    reference: string;
+    amount: number;
+    currency: string;
+    customer: {
+      id: number;
+      email: string;
+    };
+    metadata: {
+      userId: string;
+      duration: number;
+    };
+  };
+}
+
+interface WebhookEvent {
+  event: string;
+  data: {
+    id: number;
     status: string;
     reference: string;
     amount: number;
-    metadata: {
+    customer: {
+      email: string;
+    };
+    metadata?: {
       userId: string;
-      duration: string;
+      duration: number;
     };
   };
 }
@@ -36,6 +58,7 @@ interface PaystackVerifyResponse {
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private readonly paystackSecretKey: string;
+  private readonly paystackWebhookSecret: string;
   private readonly paystackBaseUrl = 'https://api.paystack.co';
 
   constructor(
@@ -43,70 +66,73 @@ export class PaymentsService {
     private readonly httpService: HttpService,
     private readonly usersService: UsersService,
   ) {
-    this.paystackSecretKey =
-      this.configService.get<string>('PAYSTACK_SECRET_KEY') || '';
+    this.paystackSecretKey = this.configService.get<string>(
+      'PAYSTACK_SECRET_KEY',
+    ) as string;
+    this.paystackWebhookSecret =
+      this.configService.get<string>('PAYSTACK_WEBHOOK_SECRET') || '';
 
-    if (!this.paystackSecretKey || this.paystackSecretKey.length < 10) {
-      this.logger.warn('⚠️ PAYSTACK_SECRET_KEY not configured properly!');
-    } else {
-      this.logger.log('✅ Paystack initialized');
+    if (!this.paystackSecretKey) {
+      this.logger.warn('PAYSTACK_SECRET_KEY not configured');
     }
   }
 
-  async initializePayment(
-    userId: string,
-    email: string,
-    duration: VipDuration,
-  ): Promise<{ authorizationUrl: string; reference: string }> {
-    // Validate secret key
-    if (!this.paystackSecretKey || !this.paystackSecretKey.startsWith('sk_')) {
-      throw new BadRequestException('Paystack not configured properly');
-    }
-
-    // Calculate price
-    const priceMap = {
-      [VipDuration.ONE_DAY]: 500,
-      [VipDuration.ONE_MONTH]: 5000,
-      [VipDuration.THREE_MONTHS]: 10000,
-      [VipDuration.SIX_MONTHS]: 20000,
-      [VipDuration.ONE_YEAR]: 40000,
+  private getPriceForDuration(duration: number): number {
+    const priceMap: Record<number, number> = {
+      [VipDuration.ONE_MONTH]: 5000, // ₵50 = 5000 pesewas
+      [VipDuration.THREE_MONTHS]: 10000, // ₵100
+      [VipDuration.SIX_MONTHS]: 20000, // ₵200
+      [VipDuration.ONE_YEAR]: 40000, // ₵400
     };
 
-    const amount = priceMap[duration];
-
-    if (!amount) {
-      throw new BadRequestException(`Invalid duration: ${duration}`);
+    const price = priceMap[duration];
+    if (!price) {
+      throw new BadRequestException('Invalid VIP duration');
     }
 
-    const durationNames = {
-      [VipDuration.ONE_DAY]: '1 Day',
-      [VipDuration.ONE_MONTH]: '1 Month',
-      [VipDuration.THREE_MONTHS]: '3 Months',
-      [VipDuration.SIX_MONTHS]: '6 Months',
-      [VipDuration.ONE_YEAR]: '1 Year',
-    };
+    return price;
+  }
 
-    // Generate completely unique reference using UUID
+  async initializePayment(userId: string, duration: number) {
+    this.logger.log(
+      `Initializing payment for user ${userId}, duration: ${duration}`,
+    );
+
+    const user = await this.usersService.findById(userId);
+    const amount = this.getPriceForDuration(duration);
     const reference = `vip_${uuidv4()}`;
 
-    this.logger.log(`Initializing payment - Reference: ${reference}`);
+    const payload = {
+      email: user.email || `${user.phoneNumber}@placeholder.com`,
+      amount: amount,
+      currency: 'GHS', // Ghana Cedis (change to NGN for Nigeria)
+      reference: reference,
+      callback_url: `${this.configService.get('FRONTEND_URL')}/vip/callback`,
+      metadata: {
+        userId: user.id,
+        duration: duration,
+        custom_fields: [
+          {
+            display_name: 'User ID',
+            variable_name: 'user_id',
+            value: user.id,
+          },
+          {
+            display_name: 'VIP Duration',
+            variable_name: 'vip_duration',
+            value: `${duration} days`,
+          },
+        ],
+      },
+    };
+
+    this.logger.debug('Paystack payload:', JSON.stringify(payload));
 
     try {
       const response = await firstValueFrom(
         this.httpService.post<PaystackInitializeResponse>(
           `${this.paystackBaseUrl}/transaction/initialize`,
-          {
-            email,
-            amount,
-            reference,
-            currency: 'GHS',
-            callback_url: `${this.configService.get('FRONTEND_URL')}/vip/callback`,
-            metadata: {
-              userId,
-              duration: duration.toString(),
-              planName: `VIP Subscription - ${durationNames[duration]}`,
-            },
-          },
+          payload,
           {
             headers: {
               Authorization: `Bearer ${this.paystackSecretKey}`,
@@ -116,42 +142,24 @@ export class PaymentsService {
         ),
       );
 
-      const data = response.data;
-
-      if (!data.status) {
-        this.logger.error(`Paystack error: ${data.message}`);
-        throw new BadRequestException(
-          data.message || 'Payment initialization failed',
-        );
-      }
-
-      this.logger.log(`✅ Payment initialized: ${reference}`);
+      this.logger.log(`Payment initialized: ${reference}`);
 
       return {
-        authorizationUrl: data.data.authorization_url,
-        reference: data.data.reference,
+        authorizationUrl: response.data.data.authorization_url,
+        reference: response.data.data.reference,
       };
     } catch (error: any) {
       this.logger.error(
-        'Payment initialization failed:',
+        'Paystack initialization error:',
         error.response?.data || error.message,
       );
-
-      if (error.response?.status === 403) {
-        throw new BadRequestException('Invalid Paystack API key');
-      }
-
       throw new BadRequestException(
-        error.response?.data?.message || 'Payment initialization failed',
+        error.response?.data?.message || 'Failed to initialize payment',
       );
     }
   }
 
-  async verifyPayment(reference: string): Promise<{
-    verified: boolean;
-    userId?: string;
-    duration?: number;
-  }> {
+  async verifyPayment(userId: string, reference: string) {
     this.logger.log(`Verifying payment: ${reference}`);
 
     try {
@@ -166,86 +174,174 @@ export class PaymentsService {
         ),
       );
 
-      const data = response.data;
+      const { data } = response.data;
 
-      if (!data.status) {
-        throw new BadRequestException('Payment verification failed');
-      }
+      this.logger.debug('Verification response:', JSON.stringify(data));
 
-      const isSuccess = data.data.status === 'success';
-
-      if (isSuccess) {
-        const userId = data.data.metadata.userId;
-        const duration = parseInt(data.data.metadata.duration);
-
-        // Grant VIP access
-        await this.usersService.grantVip(userId, { duration });
-
-        this.logger.log(
-          `✅ VIP granted to user ${userId} for ${duration} days`,
-        );
-
+      if (data.status !== 'success') {
+        this.logger.warn(`Payment not successful: ${data.status}`);
         return {
-          verified: true,
-          userId,
-          duration,
+          verified: false,
+          message: 'Payment was not successful',
         };
       }
 
-      return { verified: false };
+      // Verify the user matches
+      if (data.metadata?.userId !== userId) {
+        this.logger.error(
+          `User mismatch. Expected: ${userId}, Got: ${data.metadata?.userId}`,
+        );
+        throw new BadRequestException(
+          'Payment verification failed: User mismatch',
+        );
+      }
+
+      // Grant VIP access
+      const duration = data.metadata?.duration || VipDuration.ONE_MONTH;
+
+      this.logger.log(`Granting VIP to user ${userId} for ${duration} days`);
+
+      await this.usersService.grantVip(userId, { duration });
+
+      this.logger.log(`VIP granted successfully to user ${userId}`);
+
+      return {
+        verified: true,
+        message: 'Payment verified and VIP access granted',
+        amount: data.amount / 100, // Convert from kobo/pesewas to main currency
+        duration,
+      };
     } catch (error: any) {
       this.logger.error(
-        'Payment verification failed:',
+        'Payment verification error:',
         error.response?.data || error.message,
       );
-      throw new BadRequestException('Payment verification failed');
+      throw new BadRequestException(
+        error.response?.data?.message || 'Failed to verify payment',
+      );
     }
   }
 
-  async handleWebhook(
-    signature: string,
-    payload: any,
-  ): Promise<{ received: boolean }> {
-    // Verify webhook signature
-    const hash = crypto
-      .createHmac('sha512', this.paystackSecretKey)
-      .update(JSON.stringify(payload))
+  verifyWebhookSignature(payload: string, signature: string): boolean {
+    // In development, if no webhook secret is set, accept all webhooks
+    if (
+      this.configService.get('NODE_ENV') === 'development' &&
+      !this.paystackWebhookSecret
+    ) {
+      this.logger.warn(
+        'Webhook signature verification skipped (development mode)',
+      );
+      return true;
+    }
+
+    if (!this.paystackWebhookSecret) {
+      this.logger.error('PAYSTACK_WEBHOOK_SECRET not configured');
+      return false;
+    }
+
+    const hash = createHmac('sha512', this.paystackWebhookSecret)
+      .update(payload)
       .digest('hex');
 
-    if (hash !== signature) {
-      throw new BadRequestException('Invalid signature');
-    }
+    const isValid = hash === signature;
 
-    // Handle the event
-    const event = payload.event;
+    this.logger.debug(
+      `Signature verification: ${isValid ? 'PASSED' : 'FAILED'}`,
+    );
 
-    this.logger.log(`Webhook received: ${event}`);
-
-    switch (event) {
-      case 'charge.success':
-        await this.handleSuccessfulPayment(payload.data);
-        break;
-      default:
-        this.logger.log(`Unhandled event type ${event}`);
-    }
-
-    return { received: true };
+    return isValid;
   }
 
-  private async handleSuccessfulPayment(data: any): Promise<void> {
-    const userId = data.metadata?.userId;
-    const duration = parseInt(data.metadata?.duration || '0');
+  async handleWebhookEvent(event: WebhookEvent): Promise<void> {
+    this.logger.log(`Handling webhook event: ${event.event}`);
 
-    if (!userId || !duration) {
-      this.logger.error('Missing metadata in payment');
+    try {
+      switch (event.event) {
+        case 'charge.success':
+          await this.handleChargeSuccess(event.data);
+          break;
+
+        case 'charge.failed':
+          await this.handleChargeFailed(event.data);
+          break;
+
+        case 'transfer.success':
+          this.logger.log('Transfer success event received');
+          break;
+
+        case 'transfer.failed':
+          this.logger.log('Transfer failed event received');
+          break;
+
+        default:
+          this.logger.log(`Unhandled webhook event: ${event.event}`);
+      }
+    } catch (error: any) {
+      this.logger.error(`Error handling webhook event: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private async handleChargeSuccess(data: any): Promise<void> {
+    this.logger.log(`Processing successful charge: ${data.reference}`);
+
+    const { reference, metadata, status } = data;
+
+    if (status !== 'success') {
+      this.logger.warn(`Charge status is not success: ${status}`);
       return;
     }
 
-    // Grant VIP access
-    await this.usersService.grantVip(userId, { duration });
+    if (!metadata || !metadata.userId) {
+      this.logger.error('Missing metadata or userId in webhook payload');
+      return;
+    }
 
-    this.logger.log(
-      `✅ VIP granted to user ${userId} for ${duration} days via webhook`,
-    );
+    const { userId, duration } = metadata;
+
+    try {
+      // Check if user exists
+      const user = await this.usersService.findById(userId);
+
+      if (!user) {
+        this.logger.error(`User not found: ${userId}`);
+        return;
+      }
+
+      // Check if user already has VIP (to prevent duplicate grants)
+      if (user.isVip && user.vipExpiresAt) {
+        const expiryDate = new Date(user.vipExpiresAt);
+        const now = new Date();
+
+        // If VIP is still active and expires in the future, extend it
+        if (expiryDate > now) {
+          this.logger.log(
+            `User ${userId} already has active VIP, extending...`,
+          );
+          await this.usersService.extendVip(userId, { duration });
+        } else {
+          // VIP expired, grant new
+          this.logger.log(`User ${userId} VIP expired, granting new VIP`);
+          await this.usersService.grantVip(userId, { duration });
+        }
+      } else {
+        // No VIP, grant new
+        this.logger.log(`Granting VIP to user ${userId}`);
+        await this.usersService.grantVip(userId, { duration });
+      }
+
+      this.logger.log(`Successfully processed charge.success for ${userId}`);
+    } catch (error: any) {
+      this.logger.error(`Error processing charge.success: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private handleChargeFailed(data: any): void {
+    this.logger.warn(`Charge failed: ${data.reference}`);
+    this.logger.debug('Failed charge data:', JSON.stringify(data));
+
+    // You could send an email to the user here
+    // or log this for analytics
   }
 }
