@@ -79,6 +79,7 @@ export class PaymentsService {
 
   private getPriceForDuration(duration: number): number {
     const priceMap: Record<number, number> = {
+      [VipDuration.ONE_DAY]: 500, // ₵50 = 5000 pesewas
       [VipDuration.ONE_MONTH]: 5000, // ₵50 = 5000 pesewas
       [VipDuration.THREE_MONTHS]: 10000, // ₵100
       [VipDuration.SIX_MONTHS]: 20000, // ₵200
