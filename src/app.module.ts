@@ -30,7 +30,7 @@ import { LeagueModule } from './league/league.module';
         database: configService.get('DB_NAME'),
         url: configService.get('DB_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        synchronize: true,
         logging: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
