@@ -149,9 +149,33 @@ export class UsersService {
   async grantVip(userId: string, grantVipDto: GrantVipDto): Promise<User> {
     const user = await this.findById(userId);
 
-    const days = grantVipDto.customDays || grantVipDto.duration;
+    // Ensure days is a number ✅
+    const days = Number(grantVipDto.customDays || grantVipDto.duration);
+
+    // Validate it's a valid number
+    if (isNaN(days) || days <= 0) {
+      throw new BadRequestException(`Invalid VIP duration: ${days}`);
+    }
+
+    console.log('=== GRANT VIP DEBUG ===');
+    console.log('User ID:', userId);
+    console.log('DTO received:', grantVipDto);
+    console.log('Days to add (converted to number):', days);
+    console.log('Days type:', typeof days);
+
     const expiryDate = new Date();
+    const currentDate = new Date();
+
     expiryDate.setDate(expiryDate.getDate() + days);
+
+    console.log('Current date:', currentDate.toISOString());
+    console.log('Expiry date:', expiryDate.toISOString());
+    console.log(
+      'Days difference:',
+      Math.round(
+        (expiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    );
 
     user.isVip = true;
     user.vipExpiresAt = expiryDate;

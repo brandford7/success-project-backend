@@ -11,12 +11,14 @@ import { UpdateTipDto } from './dto/update-tip.dto';
 import { QueryTipsDto } from './dto/query-tips.dto';
 import { User } from '../users/entities/user.entity';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
+import { LeaguesService } from '../league/league.service';
 
 @Injectable()
 export class TipsService {
   constructor(
     @InjectRepository(Tip)
     private readonly tipRepository: Repository<Tip>,
+    private readonly leaguesService: LeaguesService,
   ) {}
 
   async create(createTipDto: CreateTipDto, user: User): Promise<Tip> {
@@ -26,7 +28,14 @@ export class TipsService {
       createdBy: user,
     });
 
-    return this.tipRepository.save(tip);
+    const savedTip = await this.tipRepository.save(tip);
+
+    this.trackLeagueUsage(
+      createTipDto.league,
+      createTipDto.country || 'Unknown',
+    );
+
+    return savedTip;
   }
 
   async findAll(
@@ -107,7 +116,6 @@ export class TipsService {
       throw new ForbiddenException('You can only update your own tips');
     }
 
-    tip.status = updateTipDto.status;
     tip.resultNotes = updateTipDto.resultNotes || tip.resultNotes;
 
     return this.tipRepository.save(tip);
@@ -164,5 +172,17 @@ export class TipsService {
     }
 
     return this.findAll({ ...query, isVip: true }, user);
+  }
+
+  private async trackLeagueUsage(
+    league: string,
+    country: string,
+  ): Promise<void> {
+    try {
+      await this.leaguesService.incrementUsage(league, country);
+    } catch (error) {
+      console.error('Failed to track league usage:', error);
+      // Don't fail the tip creation if league tracking fails
+    }
   }
 }

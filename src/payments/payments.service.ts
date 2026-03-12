@@ -79,11 +79,11 @@ export class PaymentsService {
 
   private getPriceForDuration(duration: number): number {
     const priceMap: Record<number, number> = {
-      [VipDuration.ONE_DAY]: 500, // ₵50 = 5000 pesewas
-      [VipDuration.ONE_MONTH]: 5000, // ₵50 = 5000 pesewas
-      [VipDuration.THREE_MONTHS]: 10000, // ₵100
-      [VipDuration.SIX_MONTHS]: 20000, // ₵200
-      [VipDuration.ONE_YEAR]: 40000, // ₵400
+      [VipDuration.ONE_DAY]: 5000, // ₵50 = 5000 pesewas
+      [VipDuration.ONE_MONTH]: 50000, // ₵50 = 5000 pesewas
+      [VipDuration.THREE_MONTHS]: 100000, // ₵100
+      [VipDuration.SIX_MONTHS]: 200000, // ₵200
+      [VipDuration.ONE_YEAR]: 400000, // ₵400
     };
 
     const price = priceMap[duration];
@@ -101,7 +101,8 @@ export class PaymentsService {
 
     const user = await this.usersService.findById(userId);
     const amount = this.getPriceForDuration(duration);
-    const reference = `vip_${uuidv4()}`;
+    const timestamp = Date.now();
+    const reference = `vip_${timestamp}_${uuidv4().substring(0, 8)}`;
 
     const payload = {
       email: user.email || `${user.phoneNumber}@placeholder.com`,
@@ -197,11 +198,19 @@ export class PaymentsService {
         );
       }
 
-      // Grant VIP access
-      const duration = data.metadata?.duration || VipDuration.ONE_MONTH;
+      // Get duration and ensure it's a number ✅
+      const duration = Number(data.metadata?.duration) || VipDuration.ONE_MONTH;
 
+      // Add debug logging
+      this.logger.log(
+        `Raw duration from metadata: ${data.metadata?.duration} (type: ${typeof data.metadata?.duration})`,
+      );
+      this.logger.log(
+        `Converted duration: ${duration} (type: ${typeof duration})`,
+      );
       this.logger.log(`Granting VIP to user ${userId} for ${duration} days`);
 
+      // Grant VIP access
       await this.usersService.grantVip(userId, { duration });
 
       this.logger.log(`VIP granted successfully to user ${userId}`);
@@ -209,7 +218,7 @@ export class PaymentsService {
       return {
         verified: true,
         message: 'Payment verified and VIP access granted',
-        amount: data.amount / 100, // Convert from kobo/pesewas to main currency
+        amount: data.amount / 100,
         duration,
       };
     } catch (error: any) {
@@ -298,10 +307,15 @@ export class PaymentsService {
       return;
     }
 
-    const { userId, duration } = metadata;
+    // Convert duration to number ✅
+    const { userId, duration: rawDuration } = metadata;
+    const duration = Number(rawDuration) || VipDuration.ONE_MONTH;
+
+    this.logger.log(
+      `Processing webhook for user ${userId}, duration: ${duration} (converted from ${rawDuration})`,
+    );
 
     try {
-      // Check if user exists
       const user = await this.usersService.findById(userId);
 
       if (!user) {
@@ -309,24 +323,21 @@ export class PaymentsService {
         return;
       }
 
-      // Check if user already has VIP (to prevent duplicate grants)
+      // Check if user already has VIP
       if (user.isVip && user.vipExpiresAt) {
         const expiryDate = new Date(user.vipExpiresAt);
         const now = new Date();
 
-        // If VIP is still active and expires in the future, extend it
         if (expiryDate > now) {
           this.logger.log(
             `User ${userId} already has active VIP, extending...`,
           );
           await this.usersService.extendVip(userId, { duration });
         } else {
-          // VIP expired, grant new
           this.logger.log(`User ${userId} VIP expired, granting new VIP`);
           await this.usersService.grantVip(userId, { duration });
         }
       } else {
-        // No VIP, grant new
         this.logger.log(`Granting VIP to user ${userId}`);
         await this.usersService.grantVip(userId, { duration });
       }

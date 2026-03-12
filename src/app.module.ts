@@ -8,6 +8,7 @@ import { TipsModule } from './tips/tips.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PaymentsModule } from './payments/payments.module';
 import { EmailModule } from './email/email.module';
+import { LeagueModule } from './league/league.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { EmailModule } from './email/email.module';
     TipsModule,
     PaymentsModule,
     EmailModule,
+    LeagueModule,
   ],
 })
 export class AppModule {}

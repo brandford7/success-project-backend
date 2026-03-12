@@ -25,6 +25,10 @@ export class CreateTipDto {
   league!: string;
 
   @IsString()
+  @IsOptional() // Add country field (optional)
+  country?: string;
+
+  @IsString()
   @IsNotEmpty({ message: 'Pick/prediction is required' })
   @MaxLength(200, { message: 'Pick must not exceed 200 characters' })
   @Transform(({ value }) => value.trim())
