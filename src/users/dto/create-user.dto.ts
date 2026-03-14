@@ -1,16 +1,17 @@
-import { Transform } from 'class-transformer';
 import {
   IsEmail,
-  IsNotEmpty,
   IsString,
-  Matches,
-  MaxLength,
+  IsNotEmpty,
   MinLength,
+  MaxLength,
   ValidateIf,
+  Matches,
+  IsArray,
+  IsOptional,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
-// RegisterDto stays as is (no roleNames field)
-export class RegisterDto {
+export class CreateUserDto {
   @ValidateIf((o) => !o.phoneNumber)
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email or phone number is required' })
@@ -24,7 +25,7 @@ export class RegisterDto {
     message: 'Phone number must be a valid Ghana or Nigeria number',
   })
   @Transform(({ value }) => value?.trim())
-  phoneNumber?: string;
+  phoneNumber?: string | null;
 
   @IsString()
   @IsNotEmpty({ message: 'Password is required' })
@@ -35,4 +36,10 @@ export class RegisterDto {
       'Password must contain uppercase, lowercase, and number/special character',
   })
   password!: string;
+
+  //  Add roleNames (optional, defaults to ['user'] in service)
+  @IsOptional()
+  @IsArray({ message: 'Role names must be an array' })
+  @IsString({ each: true, message: 'Each role name must be a string' })
+  roleNames?: string[];
 }

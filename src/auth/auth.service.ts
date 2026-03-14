@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -34,6 +35,7 @@ export interface TokenPair {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -42,9 +44,10 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+  async register(registerDto: RegisterDto) {
     const { email, phoneNumber, password } = registerDto;
 
+    // Validate at least one identifier provided
     if (!email && !phoneNumber) {
       throw new BadRequestException(
         'Either email or phone number must be provided',
@@ -69,18 +72,31 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user with 'user' role
-    const user = await this.usersService.create(
-      email || null,
-      phoneNumber || null,
-      hashedPassword,
-      ['user'],
-    );
+    // Create user (always default to 'user' role for public registration)
+
+    const user = await this.usersService.create({
+      email,
+      phoneNumber,
+      password: hashedPassword,
+      roleNames: ['user'], // Always hardcoded
+    });
 
     // Generate token
-    const token = this.generateToken(user);
+    const accessToken = this.generateToken(user);
 
-    return new AuthResponseDto(token, user);
+    // Send welcome email
+    if (user.email) {
+      try {
+        await this.emailService.sendWelcomeEmail(user.email, user.email);
+      } catch (error) {
+        this.logger.error('Failed to send welcome email:', error);
+      }
+    }
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken,
+    };
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -271,5 +287,18 @@ export class AuthService {
     await this.userRepository.save(user);
 
     return { message: 'Password has been reset successfully' };
+  }
+
+  //remove sensitive fields and transform roles
+  private sanitizeUser(user: User) {
+    // Destructure to exclude sensitive fields
+    const { password, resetPasswordToken, resetPasswordExpires, ...rest } =
+      user;
+
+    return {
+      ...rest,
+      // Transform roles from Role objects to string array
+      roles: user.roles.map((role) => role.name),
+    };
   }
 }

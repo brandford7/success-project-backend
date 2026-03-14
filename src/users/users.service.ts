@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { RolesService } from '../role/role.service';
 import { GrantVipDto } from './dto/grant-vip.dto';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { UpdateUserRolesDto } from './dto/update-user-roles.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -46,26 +48,46 @@ export class UsersService {
     return user;
   }
 
-  async create(
-    email: string | null,
-    phoneNumber: string | null,
-    password: string,
-    roleNames: string[] = ['user'],
-  ): Promise<User> {
-    // Get roles from database
-    const roles = await this.rolesService.findByNames(roleNames);
-
-    if (roles.length === 0) {
-      throw new NotFoundException('No valid roles found');
-    }
-
-    const user = this.userRepository.create({
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const {
       email,
       phoneNumber,
       password,
+      roleNames = ['user'],
+    } = createUserDto;
+
+    // Check if user already exists
+    if (email) {
+      const existingUser = await this.findByEmail(email);
+      if (existingUser) {
+        throw new ConflictException('User with this email already exists');
+      }
+    }
+
+    if (phoneNumber) {
+      const existingUser = await this.findByPhone(phoneNumber);
+      if (existingUser) {
+        throw new ConflictException(
+          'User with this phone number already exists',
+        );
+      }
+    }
+
+    // Get roles
+    const roles = await this.rolesService.findByNames(roleNames);
+
+    // Create user
+    const user = this.userRepository.create({
+      email,
+      phoneNumber,
+      password, // Should already be hashed
       roles,
     });
 
+    return this.userRepository.save(user);
+  }
+
+  async save(user: User): Promise<User> {
     return this.userRepository.save(user);
   }
 
