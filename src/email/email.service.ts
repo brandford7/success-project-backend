@@ -54,7 +54,8 @@ export class EmailService {
     const resetUrl = `${this.configService.get('FRONTEND_URL')}/auth/reset-password?token=${resetToken}`;
 
     const mailOptions = {
-      from: this.configService.get('SMTP_FROM') || 'noreply@bettingtips.com',
+      from:
+        this.configService.get('SMTP_FROM') || 'noreply@successsecretsbet.com',
       to: email,
       subject: 'Password Reset Request',
       html: `

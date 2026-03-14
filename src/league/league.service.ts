@@ -87,12 +87,19 @@ export class LeaguesService {
       { name: 'Ligue 2', country: 'France' },
       { name: 'Coupe de France', country: 'France' },
 
+      // Turkey
+      { name: 'Turkey Super League', country: 'Turkey' },
+
       // International
       { name: 'UEFA Champions League', country: 'Europe' },
       { name: 'UEFA Europa League', country: 'Europe' },
       { name: 'UEFA Conference League', country: 'Europe' },
       { name: 'FIFA World Cup', country: 'International' },
+      { name: 'FIFA Club World Cup', country: 'International' },
       { name: 'UEFA European Championship', country: 'Europe' },
+      // Other African
+      { name: 'CAF Champions League', country: 'Africa' },
+      { name: 'CAF Confederation Cup', country: 'Africa' },
 
       // Ghana
       { name: 'Ghana Premier League', country: 'Ghana' },
@@ -100,9 +107,11 @@ export class LeaguesService {
       // Nigeria
       { name: 'Nigeria Professional Football League', country: 'Nigeria' },
 
-      // Other African
-      { name: 'CAF Champions League', country: 'Africa' },
-      { name: 'CAF Confederation Cup', country: 'Africa' },
+      // Tanzania
+      { name: 'Tanzania Premier League', country: 'Tanzania' },
+
+      // China
+      { name: 'China Super League', country: 'China' },
     ];
 
     for (const leagueData of commonLeagues) {

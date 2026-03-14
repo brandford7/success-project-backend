@@ -4,7 +4,14 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, FindOptionsWhere } from 'typeorm';
+import {
+  Repository,
+  Between,
+  FindOptionsWhere,
+  MoreThanOrEqual,
+  LessThanOrEqual,
+  ILike,
+} from 'typeorm';
 import { Tip, TipStatus } from './entities/tip.entity';
 import { CreateTipDto } from './dto/create-tip.dto';
 import { UpdateTipDto } from './dto/update-tip.dto';
@@ -43,15 +50,16 @@ export class TipsService {
     user?: User,
   ): Promise<PaginatedResponse<Tip>> {
     const {
+      status,
       page = 1,
       limit = 20,
-      status,
       isVip,
       league,
       startDate,
       endDate,
     } = query;
 
+    // Build where conditions
     const where: FindOptionsWhere<Tip> = {};
 
     if (status) {
@@ -59,25 +67,44 @@ export class TipsService {
     }
 
     if (league) {
-      where.league = league;
+      where.league = ILike(`%${league}%`);
     }
 
+    // Date range filter
     if (startDate && endDate) {
       where.kickoffTime = Between(new Date(startDate), new Date(endDate));
+    } else if (startDate) {
+      where.kickoffTime = MoreThanOrEqual(new Date(startDate));
+    } else if (endDate) {
+      where.kickoffTime = LessThanOrEqual(new Date(endDate));
     }
 
-    // Filter VIP tips based on user access
+    // ✅ VIP FILTER LOGIC - CORRECTED
+    // Check user access level
+    const isAdmin = user?.roles?.some((role) => role.name === 'admin') || false;
+    const hasVipAccess = user?.isVip || false;
+
     if (isVip !== undefined) {
+      // Explicitly filtering for VIP or non-VIP tips
       where.isVip = isVip;
-    } else if (user && !user.isVip && !user.isAdmin()) {
-      // Non-VIP users can only see free tips
-      where.isVip = false;
+    } else {
+      // No explicit VIP filter - apply access control
+      if (!isAdmin && !hasVipAccess) {
+        // Non-VIP users can only see free tips
+        where.isVip = false;
+      }
+      // Admin and VIP users see all tips (no filter applied)
     }
+
+    const skip = (page - 1) * limit;
 
     const [data, total] = await this.tipRepository.findAndCount({
       where,
-      order: { kickoffTime: 'DESC', createdAt: 'DESC' },
-      skip: (page - 1) * limit,
+      relations: ['createdBy'],
+      order: {
+        kickoffTime: 'ASC',
+      },
+      skip,
       take: limit,
     });
 
@@ -182,7 +209,6 @@ export class TipsService {
       await this.leaguesService.incrementUsage(league, country);
     } catch (error) {
       console.error('Failed to track league usage:', error);
-      // Don't fail the tip creation if league tracking fails
     }
   }
 }
