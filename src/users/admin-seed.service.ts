@@ -27,10 +27,8 @@ export class AdminSeedService implements OnModuleInit {
     this.logger.log('Checking for admin user...');
 
     const adminEmail = this.configService.getOrThrow<string>('ADMIN_EMAIL');
-    const adminPassword = this.configService.getOrThrow<string>(
-      'ADMIN_PASSWORD',
-      'Admin@123456',
-    );
+    const adminPassword =
+      this.configService.getOrThrow<string>('ADMIN_PASSWORD');
 
     try {
       // Check if admin already exists
