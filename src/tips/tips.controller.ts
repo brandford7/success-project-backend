@@ -25,7 +25,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 import { VipGuard } from '../common/guards/vip.guard';
 import { Public } from '../common/decorators/public.decorator';
-//import { OptionalJwtAuthGuard } from '../common/guards/optional-auth.guard';
+import { UpdateTipStatusDto } from './dto/update-tip-status.dto';
 
 @Controller('tips')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -67,10 +67,19 @@ export class TipsController {
   @Roles('admin')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
     @Body() updateTipDto: UpdateTipDto,
+    @CurrentUser() user: User,
   ) {
     return this.tipsService.update(id, updateTipDto, user);
+  }
+
+  @Patch(':id/status')
+  @Roles('admin') // only admins can result a tip
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateTipStatusDto,
+  ) {
+    return this.tipsService.updateStatus(id, updateDto);
   }
 
   @Delete(':id')

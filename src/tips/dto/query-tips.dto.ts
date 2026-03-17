@@ -4,7 +4,6 @@ import {
   IsInt,
   Min,
   Max,
-  IsBoolean,
   IsDateString,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';

@@ -1,11 +1,13 @@
-import { IsEnum, IsString, IsOptional } from 'class-validator';
+// dto/update-tip-status.dto.ts
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { TipStatus } from '../entities/tip.entity';
 
 export class UpdateTipStatusDto {
   @IsEnum(TipStatus)
   status!: TipStatus;
 
-  @IsString()
   @IsOptional()
+  @IsString()
+  @MaxLength(500)
   resultNotes?: string;
 }

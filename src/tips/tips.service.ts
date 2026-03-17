@@ -20,6 +20,7 @@ import { User } from '../users/entities/user.entity';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { LeaguesService } from '../league/league.service';
 import { log } from 'console';
+import { UpdateTipStatusDto } from './dto/update-tip-status.dto';
 
 @Injectable()
 export class TipsService {
@@ -72,12 +73,27 @@ export class TipsService {
     }
 
     // Date range filter
-    if (startDate && endDate) {
-      where.kickoffTime = Between(new Date(startDate), new Date(endDate));
-    } else if (startDate) {
-      where.kickoffTime = MoreThanOrEqual(new Date(startDate));
-    } else if (endDate) {
-      where.kickoffTime = LessThanOrEqual(new Date(endDate));
+    if (startDate || endDate) {
+      // 1. Create the Date objects first
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+
+      // 2. Adjust the time to cover the FULL day
+      if (start) {
+        start.setUTCHours(0, 0, 0, 0); // Start at midnight
+      }
+      if (end) {
+        end.setUTCHours(23, 59, 59, 999); // End at the very last millisecond
+      }
+
+      // 3. Apply to your 'where' object using your current style
+      if (start && end) {
+        where.kickoffTime = Between(start, end);
+      } else if (start) {
+        where.kickoffTime = MoreThanOrEqual(start);
+      } else if (end) {
+        where.kickoffTime = LessThanOrEqual(end);
+      }
     }
 
     // ✅ VIP FILTER LOGIC - CORRECTED
@@ -125,7 +141,6 @@ export class TipsService {
   async findById(id: string): Promise<Tip> {
     const tip = await this.tipRepository.findOne({
       where: { id },
-      relations: ['roles'],
     });
 
     if (!tip) {
@@ -140,16 +155,48 @@ export class TipsService {
     updateTipDto: UpdateTipDto,
     user: User,
   ): Promise<Tip> {
+    // 1. Fetch the tip (findById should load the 'createdBy' relation)
     const tip = await this.findById(id);
 
-    // Check if user is the creator or admin
-    if (tip.createdBy.id !== user.id && !user.isAdmin()) {
-      throw new ForbiddenException('You can only update your own tips');
+    // 2. Security Check: Only the Creator or an Admin can edit
+    // Using a direct role check in case user.isAdmin() isn't a class instance
+    const isAdmin = user.roles?.some((r) => r.name === 'admin');
+    const isCreator = tip.createdBy?.id === user.id;
+
+    if (!isCreator && !isAdmin) {
+      throw new ForbiddenException(
+        'You do not have permission to update this tip',
+      );
     }
 
-    tip.resultNotes = updateTipDto.resultNotes || tip.resultNotes;
+    // 3. Apply the updates from the DTO
+    // Object.assign will update status, match, league, odds, etc., if they exist in the DTO
+    Object.assign(tip, updateTipDto);
 
-    return this.tipRepository.save(tip);
+    // 4. Specifically handle resultNotes if provided (handles empty string vs null)
+    if (updateTipDto.resultNotes !== undefined) {
+      tip.resultNotes = updateTipDto.resultNotes;
+    }
+
+    // 5. Save the updated entity
+    return await this.tipRepository.save(tip);
+  }
+
+  async updateStatus(id: string, updateDto: UpdateTipStatusDto): Promise<Tip> {
+    // 1. Check if the tip exists
+    const tip = await this.tipRepository.findOne({ where: { id } });
+
+    if (!tip) {
+      throw new NotFoundException(`Tip with ID ${id} not found`);
+    }
+
+    tip.status = updateDto.status;
+
+    if (updateDto.resultNotes !== undefined) {
+      tip.resultNotes = updateDto.resultNotes;
+    }
+
+    return await this.tipRepository.save(tip);
   }
 
   async delete(id: string, user: User): Promise<void> {

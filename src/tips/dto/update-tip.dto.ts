@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -9,7 +9,9 @@ import {
   Min,
   Max,
   MaxLength,
+  IsEnum,
 } from 'class-validator';
+import { TipStatus } from '../entities/tip.entity';
 
 export class UpdateTipDto {
   @IsString()
@@ -31,6 +33,7 @@ export class UpdateTipDto {
   @IsOptional()
   pick?: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(1.01)
   @Max(1000)
@@ -55,5 +58,7 @@ export class UpdateTipDto {
   @Transform(({ value }) => value?.trim())
   resultNotes?: string;
 
-  // Status is NOT here - use UpdateTipStatusDto for status updates
+  @IsOptional()
+  @IsEnum(TipStatus)
+  status?: TipStatus; // <--- Added this
 }
