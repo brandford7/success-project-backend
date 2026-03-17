@@ -25,6 +25,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 import { VipGuard } from '../common/guards/vip.guard';
 import { Public } from '../common/decorators/public.decorator';
+//import { OptionalJwtAuthGuard } from '../common/guards/optional-auth.guard';
 
 @Controller('tips')
 @UseGuards(JwtAuthGuard, RolesGuard)

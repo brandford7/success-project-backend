@@ -7,7 +7,7 @@ import {
   IsBoolean,
   IsDateString,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { TipStatus } from '../entities/tip.entity';
 
 export class QueryTipsDto {
@@ -29,8 +29,12 @@ export class QueryTipsDto {
   limit?: number = 20;
 
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  // No @IsBoolean here yet, let's transform first
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return undefined;
+  })
   isVip?: boolean;
 
   @IsOptional()

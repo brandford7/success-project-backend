@@ -19,6 +19,7 @@ import { QueryTipsDto } from './dto/query-tips.dto';
 import { User } from '../users/entities/user.entity';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { LeaguesService } from '../league/league.service';
+import { log } from 'console';
 
 @Injectable()
 export class TipsService {
@@ -82,7 +83,7 @@ export class TipsService {
     // ✅ VIP FILTER LOGIC - CORRECTED
     // Check user access level
     const isAdmin = user?.roles?.some((role) => role.name === 'admin') || false;
-    const hasVipAccess = user?.isVip || false;
+    const hasVipAccess = user?.hasActiveVip() || false;
 
     if (isVip !== undefined) {
       // Explicitly filtering for VIP or non-VIP tips
@@ -108,6 +109,8 @@ export class TipsService {
       take: limit,
     });
 
+    console.log(user, hasVipAccess);
+
     return {
       data,
       meta: {
@@ -122,6 +125,7 @@ export class TipsService {
   async findById(id: string): Promise<Tip> {
     const tip = await this.tipRepository.findOne({
       where: { id },
+      relations: ['roles'],
     });
 
     if (!tip) {
