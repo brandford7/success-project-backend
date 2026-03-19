@@ -19,7 +19,6 @@ import { QueryTipsDto } from './dto/query-tips.dto';
 import { User } from '../users/entities/user.entity';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { LeaguesService } from '../league/league.service';
-import { log } from 'console';
 import { UpdateTipStatusDto } from './dto/update-tip-status.dto';
 
 @Injectable()
@@ -124,8 +123,6 @@ export class TipsService {
       skip,
       take: limit,
     });
-
-    console.log(user, hasVipAccess);
 
     return {
       data,

@@ -33,6 +33,11 @@ export class UpdateTipDto {
   @IsOptional()
   pick?: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  category?: string;
+
   @Type(() => Number)
   @IsNumber()
   @Min(1.01)

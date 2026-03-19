@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { PaymentsModule } from './payments/payments.module';
 import { EmailModule } from './email/email.module';
 import { LeagueModule } from './league/league.module';
+import { PickModule } from './pick/pick.module';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { LeagueModule } from './league/league.module';
         database: configService.get('DB_NAME'),
         url: configService.get('DB_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        synchronize: true,
         logging: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
@@ -43,6 +44,7 @@ import { LeagueModule } from './league/league.module';
     PaymentsModule,
     EmailModule,
     LeagueModule,
+    PickModule,
   ],
 })
 export class AppModule {}

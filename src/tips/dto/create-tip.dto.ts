@@ -34,6 +34,12 @@ export class CreateTipDto {
   @Transform(({ value }) => value.trim())
   pick!: string;
 
+  @IsString()
+  @IsNotEmpty({ message: 'Category is required' })
+  @MaxLength(200, { message: 'Category must not exceed 200 characters' })
+  @Transform(({ value }) => value.trim())
+  category!: string;
+
   @IsNumber(
     { maxDecimalPlaces: 2 },
     { message: 'Odds must be a valid number with max 2 decimal places' },
