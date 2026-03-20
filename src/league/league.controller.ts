@@ -2,9 +2,11 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { LeaguesService } from './league.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { SkipThrottle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @Controller('leagues')
 @UseGuards(JwtAuthGuard)
+@SkipThrottle()
 export class LeaguesController {
   constructor(private readonly leaguesService: LeaguesService) {}
 

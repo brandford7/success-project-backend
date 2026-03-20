@@ -7,10 +7,10 @@ export class Pick {
   id!: number;
 
   @Column()
-  name!: string; // e.g., "Over 2.5"
+  name!: string;
 
   @Column()
-  category!: string; // e.g., "Goals"
+  category!: string;
 
   @Column({ default: 0 })
   usageCount!: number;

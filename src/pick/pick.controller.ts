@@ -1,8 +1,10 @@
 import { Controller, Get, Post, Body, Query, Patch } from '@nestjs/common';
 import { PicksService } from './pick.service';
 import { Pick } from './entities/pick.entity';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('picks')
+@SkipThrottle()
 export class PicksController {
   constructor(private readonly picksService: PicksService) {}
 

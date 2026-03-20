@@ -36,7 +36,7 @@ export class Tip {
 
   //newly added for testing
   @Column({ type: 'varchar', length: 50, default: 'General' })
-  marketCategory!: string;
+  category!: string;
 
   @Column({ type: 'decimal', precision: 5, scale: 2 })
   odds!: number;

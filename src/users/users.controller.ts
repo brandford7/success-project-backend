@@ -21,9 +21,11 @@ import { GrantVipDto } from './dto/grant-vip.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { VipExpiryService } from './vip-expiry.service';
 import { UpdateUserRolesDto } from './dto/update-user-roles.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@SkipThrottle()
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
