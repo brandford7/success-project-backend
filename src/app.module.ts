@@ -13,6 +13,7 @@ import { PickModule } from './pick/pick.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     LeagueModule,
     PickModule,
   ],
+  controllers: [HealthController],
 
   providers: [
     // ✅ Global Exception Filter
