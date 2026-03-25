@@ -21,11 +21,12 @@ export class CreateUserDto {
   @ValidateIf((o) => !o.email)
   @IsString()
   @IsNotEmpty({ message: 'Email or phone number is required' })
-  @Matches(/^(\+?233|0)[2-5]\d{8}$|^(\+?234|0)[7-9]\d{9}$/, {
-    message: 'Phone number must be a valid Ghana or Nigeria number',
+  @Matches(/^\+?[1-9]\d{1,14}$/, {
+    message:
+      'Phone number must be a valid international format (e.g., +1234567890)',
   })
   @Transform(({ value }) => value?.trim())
-  phoneNumber?: string | null;
+  phoneNumber?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Password is required' })
