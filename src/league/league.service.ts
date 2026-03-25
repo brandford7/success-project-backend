@@ -90,16 +90,32 @@ export class LeaguesService {
       // Turkey
       { name: 'Turkey Super League', country: 'Turkey' },
 
-      // International
+      // UEFA Competitions
       { name: 'UEFA Champions League', country: 'Europe' },
       { name: 'UEFA Europa League', country: 'Europe' },
       { name: 'UEFA Conference League', country: 'Europe' },
-      { name: 'FIFA World Cup', country: 'International' },
-      { name: 'FIFA Club World Cup', country: 'International' },
+      { name: 'World Cup Qualifiers UEFA', country: 'Europe' },
+      { name: 'UEFA European Championship Qualifiers', country: 'Europe' },
       { name: 'UEFA European Championship', country: 'Europe' },
+
+      //International
+      { name: 'FIFA World Cup', country: 'International' },
+      {
+        name: 'FIFA Club World Cup Qualification Playoffs',
+        country: 'International',
+      },
+      { name: 'FIFA Confederations Cup', country: 'International' },
+      { name: 'FIFA Club World Cup', country: 'International' },
+      { name: 'FIFA Intercontinental Cup', country: 'International' },
+      { name: 'FIFA Club World Cup', country: 'International' },
+      { name: 'International Friendly', country: 'International' },
+
       // Other African
       { name: 'CAF Champions League', country: 'Africa' },
       { name: 'CAF Confederation Cup', country: 'Africa' },
+      { name: 'Africa Cup of Nations', country: 'Africa' },
+      { name: 'AFCON Qualifiers', country: 'Africa' },
+      { name: 'World Cup Qualifiers CAF', country: 'Africa' },
 
       // Ghana
       { name: 'Ghana Premier League', country: 'Ghana' },
