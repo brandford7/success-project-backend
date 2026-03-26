@@ -64,6 +64,7 @@ export class CryptoGateway implements IPaymentGateway {
     // Store metadata in order_description
     const metadata = {
       userId: user.id,
+      userEmail: user?.email || user?.phoneNumber,
       duration: Number(request.duration),
       gateway: 'crypto',
     };
@@ -138,7 +139,7 @@ export class CryptoGateway implements IPaymentGateway {
 
       // ✅ Fallback to approximate rate if API fails
       // Current rate as of March 2024: ~1 GHS = 0.082 USD
-      const fallbackRate = 0.082;
+      const fallbackRate = 0.01;
       const amountInUsd = amountInCedis * fallbackRate;
 
       this.logger.warn(
