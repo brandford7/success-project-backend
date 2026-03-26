@@ -59,7 +59,7 @@ export class PicksService {
       { name: 'X2', category: '1st Half Double Chance' },
       { name: '12', category: '1st Half Double Chance' },
 
-      // Goals
+      // Full Time Goals
       { name: 'Over 1.5', category: 'Full Time Goals' },
       { name: 'Under 1.5', category: 'Full Time Goals' },
       { name: 'Over 2.5', category: 'Full Time Goals' },
@@ -69,6 +69,7 @@ export class PicksService {
       { name: 'Over 4.5', category: 'Full Time Goals' },
       { name: 'Under 4.5', category: 'Full Time Goals' },
 
+      // 1st Half Goals
       { name: 'Over 1.5', category: '1st Half Goals' },
       { name: 'Under 1.5', category: '1st Half Goals' },
       { name: 'Over 2.5', category: '1st Half Goals' },
@@ -78,6 +79,7 @@ export class PicksService {
       { name: 'Over 4.5', category: '1st Half Goals' },
       { name: 'Under 4.5', category: '1st Half Goals' },
 
+      //2nd Half Goals
       { name: 'Over 1.5', category: '2nd Half Goals' },
       { name: 'Under 1.5', category: '2nd Half Goals' },
       { name: 'Over 2.5', category: '2nd Half Goals' },
@@ -86,6 +88,26 @@ export class PicksService {
       { name: 'Under 3.5', category: '2nd Half Goals' },
       { name: 'Over 4.5', category: '2nd Half Goals' },
       { name: 'Under 4.5', category: '2nd Half Goals' },
+
+      //Home Team Goals
+      { name: 'Over 1.5', category: 'Home Team Goals' },
+      { name: 'Under 1.5', category: 'Home Team Goals' },
+      { name: 'Over 2.5', category: 'Home Team Goals' },
+      { name: 'Under 2.5', category: 'Home Team Goals' },
+      { name: 'Over 3.5', category: 'Home Team Goals' },
+      { name: 'Under 3.5', category: 'Home Team Goals' },
+      { name: 'Over 4.5', category: 'Home Team Goals' },
+      { name: 'Under 4.5', category: 'Home Team Goals' },
+
+      //Away Team Goals
+      { name: 'Over 1.5', category: 'Away Team Goals' },
+      { name: 'Under 1.5', category: 'Away Team Goals' },
+      { name: 'Over 2.5', category: 'Away Team Goals' },
+      { name: 'Under 2.5', category: 'Away Team Goals' },
+      { name: 'Over 3.5', category: 'Away Team Goals' },
+      { name: 'Under 3.5', category: 'Away Team Goals' },
+      { name: 'Over 4.5', category: 'Away Team Goals' },
+      { name: 'Under 4.5', category: 'Away Team Goals' },
 
       // Both Teams to Score
       { name: 'BTTS Yes', category: 'BTTS' },
