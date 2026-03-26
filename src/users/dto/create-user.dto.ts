@@ -26,7 +26,7 @@ export class CreateUserDto {
       'Phone number must be a valid international format (e.g., +1234567890)',
   })
   @Transform(({ value }) => value?.trim())
-  phoneNumber?: string;
+  phoneNumber?: string | null;
 
   @IsString()
   @IsNotEmpty({ message: 'Password is required' })
