@@ -70,6 +70,8 @@ export class PicksService {
       { name: 'Under 3.5', category: 'Full Time Goals' },
       { name: 'Over 4.5', category: 'Full Time Goals' },
       { name: 'Under 4.5', category: 'Full Time Goals' },
+      { name: 'Over 5.5', category: 'Full Time Goals' },
+      { name: 'Under 5.5', category: 'Full Time Goals' },
 
       // 1st Half Goals
       { name: 'Over 0.5', category: '1st Half Goals' },
