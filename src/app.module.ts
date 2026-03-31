@@ -64,8 +64,12 @@ import { HealthController } from './health/health.controller';
         database: configService.get('DB_NAME'),
         url: configService.get('DB_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
+        synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
+        ssl:
+          configService.get('NODE_ENV') === 'production'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
       inject: [ConfigService],
     }),

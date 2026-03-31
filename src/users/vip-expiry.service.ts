@@ -21,6 +21,7 @@ export class VipExpiryService {
     }
   }
 
+  /*
   // Run every hour (for testing or more frequent checks)
   @Cron(CronExpression.EVERY_HOUR)
   async handleVipExpiryHourly() {
@@ -32,7 +33,7 @@ export class VipExpiryService {
       this.logger.error(' Hourly VIP expiry check failed:', error);
     }
   }
-
+*/
   // Manual trigger endpoint can use this
   async manualExpiryCheck() {
     this.logger.log('🔧 Manual VIP expiry check triggered...');
