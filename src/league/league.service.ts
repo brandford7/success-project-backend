@@ -231,8 +231,10 @@ export class LeaguesService {
         name: 'UEFA European Championship Qualifiers Women',
         country: 'Europe',
       },
+      { name: 'UEFA Nations League', country: 'Europe' },
       { name: 'UEFA European Championship', country: 'Europe' },
       { name: 'UEFA European Championship Women', country: 'Europe' },
+      { name: 'Other European Competitions', country: 'Europe' },
 
       //International
       { name: 'FIFA World Cup', country: 'International' },

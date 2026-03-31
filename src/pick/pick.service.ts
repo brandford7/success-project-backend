@@ -60,6 +60,8 @@ export class PicksService {
       { name: '12', category: '1st Half Double Chance' },
 
       // Full Time Goals
+      { name: 'Over 0.5', category: 'Full Time Goals' },
+      { name: 'Under 0.5', category: 'Full Time Goals' },
       { name: 'Over 1.5', category: 'Full Time Goals' },
       { name: 'Under 1.5', category: 'Full Time Goals' },
       { name: 'Over 2.5', category: 'Full Time Goals' },
@@ -70,6 +72,8 @@ export class PicksService {
       { name: 'Under 4.5', category: 'Full Time Goals' },
 
       // 1st Half Goals
+      { name: 'Over 0.5', category: '1st Half Goals' },
+      { name: 'Under 0.5', category: '1st Half Goals' },
       { name: 'Over 1.5', category: '1st Half Goals' },
       { name: 'Under 1.5', category: '1st Half Goals' },
       { name: 'Over 2.5', category: '1st Half Goals' },
@@ -80,6 +84,8 @@ export class PicksService {
       { name: 'Under 4.5', category: '1st Half Goals' },
 
       //2nd Half Goals
+      { name: 'Over 0.5', category: '2nd Half Goals' },
+      { name: 'Under 0.5', category: '2nd Half Goals' },
       { name: 'Over 1.5', category: '2nd Half Goals' },
       { name: 'Under 1.5', category: '2nd Half Goals' },
       { name: 'Over 2.5', category: '2nd Half Goals' },
@@ -90,6 +96,8 @@ export class PicksService {
       { name: 'Under 4.5', category: '2nd Half Goals' },
 
       //Home Team Goals
+      { name: 'Over 0.5', category: 'Home Team Goals' },
+      { name: 'Under 0.5', category: 'Home Team Goals' },
       { name: 'Over 1.5', category: 'Home Team Goals' },
       { name: 'Under 1.5', category: 'Home Team Goals' },
       { name: 'Over 2.5', category: 'Home Team Goals' },
@@ -100,6 +108,8 @@ export class PicksService {
       { name: 'Under 4.5', category: 'Home Team Goals' },
 
       //Away Team Goals
+      { name: 'Over 0.5', category: 'Away Team Goals' },
+      { name: 'Under 0.5', category: 'Away Team Goals' },
       { name: 'Over 1.5', category: 'Away Team Goals' },
       { name: 'Under 1.5', category: 'Away Team Goals' },
       { name: 'Over 2.5', category: 'Away Team Goals' },
