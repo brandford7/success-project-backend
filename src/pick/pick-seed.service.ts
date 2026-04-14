@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 
-import { PicksService } from '../pick/pick.service'; 
+import { PicksService } from '../pick/pick.service';
 
 @Injectable()
 export class PicksSeedService implements OnModuleInit {
