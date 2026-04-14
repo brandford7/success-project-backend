@@ -9,11 +9,9 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Global prefix
-  app.setGlobalPrefix('api', {
-    exclude: ['health'], // This moves /api/health to just /health
-  });
+  app.setGlobalPrefix('api');
 
-  // CORS - IMPORTANT!
+  // CORS
   app.enableCors({
     origin: [process.env.FRONTEND_URL, 'http://localhost:3000'], // Frontend URL
     credentials: true,
